@@ -1,0 +1,246 @@
+C51 COMPILER V9.60.0.0   MAIN                                                              08/13/2023 12:56:03 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\Keil\C51\BIN\C51.EXE main.c LARGE OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\m
+                    -ain.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include <REGX52.H>
+   2          #include "Delay.h"
+   3          #include "LCD1602.h"
+   4          #include "MatrixKey.h"
+   5          
+   6          #define queue_size 20
+   7          
+   8          unsigned int KeyNum, Keyflag;
+   9          
+  10          unsigned int queue[queue_size], st[queue_size];
+  11          unsigned int front = 0, rear = 0, length = 0, count_size = 0;
+  12          
+  13          
+  14          unsigned char code led_duan[17][8]={
+  15          {0x00,0x00,0x3e,0x41,0x41,0x41,0x3e,0x00},     //0
+  16          {0x00,0x00,0x00,0x21,0x7f,0x01,0x00,0x00},     //1
+  17          {0x00,0x00,0x27,0x45,0x45,0x45,0x39,0x00},     //2
+  18          {0x00,0x00,0x2a,0x49,0x49,0x49,0x36,0x00},     //3
+  19          {0x00,0x00,0x0c,0x14,0x24,0x7f,0x04,0x00},     //4
+  20          {0x00,0x00,0x72,0x51,0x51,0x51,0x4e,0x00},     //5
+  21          {0x00,0x00,0x3e,0x49,0x49,0x49,0x26,0x00},     //6
+  22          {0x00,0x00,0x40,0x40,0x4f,0x50,0x60,0x00},     //7
+  23          {0x00,0x00,0x36,0x49,0x49,0x49,0x36,0x00},     //8
+  24          {0x00,0x00,0x32,0x49,0x49,0x49,0x3e,0x00},     //9
+  25          {0x21,0x7F,0x01,0x3E,0x41,0x41,0x41,0x3E},     //10
+  26          {0x21,0x7F,0x01,0x00,0x21,0x7F,0x01,0x00},     //11
+  27          {0x21,0x7F,0x01,0x00,0x4F,0x49,0x79,0x00},     //12
+  28          {0x21,0x7F,0x01,0x00,0x49,0x49,0x7F,0x00},     //13
+  29          {0x21,0x7F,0x01,0x78,0x08,0x08,0x7F,0x08},     //14
+  30          {0x21,0x7F,0x01,0x00,0x79,0x49,0x49,0x4F},     //15
+  31          {0x21,0x7F,0x01,0x00,0x7F,0x49,0x49,0x4F},     //16
+  32          };  
+  33          
+  34          unsigned char led_wei[8]={0x7f,0xbf,0xdf,0xef,0xf7,0xfb,0xfd,0xfe};
+  35          
+  36          void LCD_s()
+  37          {
+  38   1        LCD_Init();
+  39   1        LCD_ShowString(1, 1, "MGY_work:");
+  40   1      }
+  41          
+  42          unsigned int judge(unsigned int num)
+  43          {
+  44   1        unsigned int cnt = 0;
+  45   1        while(num)
+  46   1        {
+  47   2          num /= 10;
+  48   2          cnt ++;
+  49   2        }
+  50   1        return cnt;
+  51   1      }
+  52          
+  53          unsigned int judge_col(unsigned int n)
+  54          {
+C51 COMPILER V9.60.0.0   MAIN                                                              08/13/2023 12:56:03 PAGE 2   
+
+  55   1        unsigned int wei = judge(n);
+  56   1        if(wei == 1) return 16;
+  57   1        else if(wei == 2) return 15;
+  58   1        else if(wei == 0) return 16;
+  59   1        else if(wei == 3) return 14;
+  60   1        return 0;
+  61   1      }
+  62          
+  63          void sing()
+  64          {
+  65   1        unsigned int i = 500;
+  66   1        while(i --)
+  67   1        {
+  68   2          BEEP = !BEEP;
+  69   2          Delay(10);
+  70   2        }
+  71   1        BEEP = 0;
+  72   1      }
+  73          
+  74          int query(unsigned int x)
+  75          {
+  76   1        int i, idx = -1;
+  77   1        for(i = 0; i < length; i ++) {
+  78   2          if(x == queue[i] && st[i] == 1) {
+  79   3            idx = i; 
+  80   3          }
+  81   2        }
+  82   1        if(idx == -1) return -1;
+  83   1        else return idx;
+  84   1      }
+  85          
+  86          void enqueue(unsigned int x)
+  87          {
+  88   1        if(count_size == queue_size) return;
+  89   1        if(st[(rear + 1) % queue_size]) {
+  90   2          LCD_ShowString(2, 1, "reserved");
+  91   2          return;
+  92   2        }
+  93   1        
+  94   1        queue[rear] = x;
+  95   1        st[rear] = 1;
+  96   1        
+  97   1        rear = (rear + 1) % queue_size;
+  98   1        length ++;
+  99   1        count_size ++;
+ 100   1      }
+ 101          
+ 102          void dequeue()
+ 103          {
+ 104   1        if(count_size == 0) return;
+ 105   1        
+ 106   1        queue[front] = 0;
+ 107   1        st[front] = 0;
+ 108   1        
+ 109   1        front = (front + 1) % queue_size;
+ 110   1        count_size --;
+ 111   1      }
+ 112          
+ 113          void display(unsigned int x)
+ 114          {
+ 115   1        unsigned int i, CNT = 500;
+ 116   1        while(CNT --) {
+C51 COMPILER V9.60.0.0   MAIN                                                              08/13/2023 12:56:03 PAGE 3   
+
+ 117   2          for(i = 0; i < 8; i ++) {
+ 118   3            P0 = led_wei[i];
+ 119   3            Hc595SendByte(led_duan[x][i]);
+ 120   3            delay_10us(50);       
+ 121   3            Hc595SendByte(0x00);
+ 122   3          }
+ 123   2          BEEP = !BEEP;
+ 124   2          Delay(10);
+ 125   2        }
+ 126   1        BEEP = 0;
+ 127   1      }
+ 128          
+ 129          void booking(unsigned int num)
+ 130          {
+ 131   1        if(!st[num - 1]) {
+ 132   2          queue[num - 1] = 520;
+ 133   2          st[num - 1] = 1;
+ 134   2          count_size ++;
+ 135   2          LCD_ShowString(2, 1, "OK");
+ 136   2        }
+ 137   1        else LCD_ShowString(2, 1, "Sorry");
+ 138   1      }
+ 139          
+ 140          void show(unsigned int x)
+ 141          {
+ 142   1        Keyflag = key_scan();
+ 143   1        
+ 144   1        if(Keyflag == KEY2_PRESS) {
+ 145   2          enqueue(x);
+ 146   2          LCD_ShowString(2, 1, "Queued");
+ 147   2        }
+ 148   1        else if(Keyflag == KEY3_PRESS) {
+ 149   2          if(query(x) == -1) LCD_ShowString(2, 1, "none");
+ 150   2          else {
+ 151   3            LCD_ShowNum(1, judge_col(query(x) + 1), query(x) + 1, judge(query(x) + 1));
+ 152   3            LCD_ShowString(2, 1, "Count");
+ 153   3            LCD_ShowNum(2, judge_col(count_size), count_size, judge(count_size));
+ 154   3          }
+ 155   2        }
+ 156   1        else if(Keyflag == KEY4_PRESS) booking(x);
+ 157   1        else if(Keyflag == KEY6_PRESS) {
+ 158   2          if(query(x) == -1) LCD_ShowString(2, 1, "none");
+ 159   2          else {
+ 160   3            LCD_ShowNum(1, judge_col(queue[query(x) + 1]), queue[query(x) + 1], judge(queue[query(x) + 1]));
+ 161   3            sing();
+ 162   3            //      display(queue[query(x) + 1]);
+ 163   3          } 
+ 164   2          dequeue();
+ 165   2        }
+ 166   1        else if(Keyflag == KEY7_PRESS) {
+ 167   2          if(query(x) == -1) LCD_ShowString(2, 1, "none");
+ 168   2          else {
+ 169   3            LCD_ShowNum(1, judge_col(queue[query(x)]), queue[query(x)], judge(queue[query(x)]));
+ 170   3            sing();
+ 171   3            //      display(queue[query(x)]);
+ 172   3          }
+ 173   2        }
+ 174   1        else if(Keyflag == KEY8_PRESS) {
+ 175   2          enqueue(x);
+ 176   2          dequeue();
+ 177   2          LCD_ShowString(2, 1, "Expired");
+ 178   2        }
+C51 COMPILER V9.60.0.0   MAIN                                                              08/13/2023 12:56:03 PAGE 4   
+
+ 179   1      }
+ 180          
+ 181          void main()
+ 182          {
+ 183   1        unsigned int i;
+ 184   1        for(i = 0; i < queue_size; i ++) st[i] = 0;
+ 185   1        
+ 186   1        LCD_s();
+ 187   1      
+ 188   1        while(1)
+ 189   1        { 
+ 190   2          if(count_size == 0) LCD_ShowString(2,1,"none");
+ 191   2          else LCD_ShowNum(2,judge_col(queue[front]),queue[front],judge(queue[front]));
+ 192   2          
+ 193   2          KeyNum = MatrixKey();
+ 194   2          
+ 195   2          switch(KeyNum)
+ 196   2          {
+ 197   3            case 1: LCD_s(); show(1); Delay(1000); LCD_s(); break;
+ 198   3            case 2: LCD_s(); show(2); Delay(1000); LCD_s(); break;
+ 199   3            case 3: LCD_s(); show(3); Delay(1000); LCD_s(); break;
+ 200   3            case 4: LCD_s(); show(4); Delay(1000); LCD_s(); break;
+ 201   3            case 5: LCD_s(); show(5); Delay(1000); LCD_s(); break;
+ 202   3            case 6: LCD_s(); show(6); Delay(1000); LCD_s(); break;
+ 203   3            case 7: LCD_s(); show(7); Delay(1000); LCD_s(); break;
+ 204   3            case 8: LCD_s(); show(8); Delay(1000); LCD_s(); break;
+ 205   3            case 9: LCD_s(); show(9); Delay(1000); LCD_s(); break;
+ 206   3            case 10: LCD_s(); show(10); Delay(1000); LCD_s(); break;
+ 207   3            case 11: LCD_s(); show(11); Delay(1000); LCD_s(); break;
+ 208   3            case 12: LCD_s(); show(12); Delay(1000); LCD_s(); break;
+ 209   3            case 13: LCD_s(); show(13); Delay(1000); LCD_s(); break;
+ 210   3            case 14: LCD_s(); show(14); Delay(1000); LCD_s(); break;
+ 211   3            case 15: LCD_s(); show(15); Delay(1000); LCD_s(); break;
+ 212   3            case 16: LCD_s(); show(16); Delay(1000); LCD_s(); break;
+ 213   3          }
+ 214   2      //    if(K1 == )
+ 215   2        }
+ 216   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1843    ----
+   CONSTANT SIZE    =    190    ----
+   XDATA SIZE       =    100      16
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

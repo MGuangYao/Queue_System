@@ -1,0 +1,107 @@
+C51 COMPILER V9.60.0.0   Q                                                                 06/01/2023 17:33:09 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE Q
+OBJECT MODULE PLACED IN .\Objects\q.obj
+COMPILER INVOKED BY: D:\Keil\C51\BIN\C51.EXE 新建文件夹\q.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings
+                    -\q.lst) TABS(2) OBJECT(.\Objects\q.obj)
+
+line level    source
+
+   1          #include <reg51.h>
+   2          #include <intrins.h>
+   3           
+   4          typedef unsigned char u8;
+   5          typedef unsigned int u16;
+   6           
+   7          sbit SRCLK=P2^6;
+   8          sbit RC=P2^7;
+   9          sbit SER=P2^5;
+  10           
+  11          u8 code ledduan[][8]={
+  12          {0x00,0x00,0x3e,0x41,0x41,0x41,0x3e,0x00},     //0
+  13          {0x00,0x00,0x00,0x21,0x7f,0x01,0x00,0x00},     //1
+  14          {0x00,0x00,0x27,0x45,0x45,0x45,0x39,0x00},     //2
+  15          {0x00,0x00,0x2a,0x49,0x49,0x49,0x36,0x00},     //3
+  16          {0x00,0x00,0x0c,0x14,0x24,0x7f,0x04,0x00},     //4
+  17          {0x00,0x00,0x72,0x51,0x51,0x51,0x4e,0x00},     //5
+  18          {0x00,0x00,0x3e,0x49,0x49,0x49,0x26,0x00},     //6
+  19          {0x00,0x00,0x40,0x40,0x4f,0x50,0x60,0x00},     //7
+  20          {0x00,0x00,0x36,0x49,0x49,0x49,0x36,0x00},     //8
+  21          {0x00,0x00,0x32,0x49,0x49,0x49,0x3e,0x00},     //9
+  22          {0x21,0x7F,0x01,0x3E,0x41,0x41,0x41,0x3E},     //10
+  23          {0x21,0x7F,0x01,0x00,0x21,0x7F,0x01,0x00},     //11
+  24          {0x21,0x7F,0x01,0x00,0x4F,0x49,0x79,0x00},     //12
+  25          {0x21,0x7F,0x01,0x00,0x49,0x49,0x7F,0x00},     //13
+  26          {0x21,0x7F,0x01,0x78,0x08,0x08,0x7F,0x08},     //14
+  27          {0x21,0x7F,0x01,0x00,0x79,0x49,0x49,0x4F},     //15
+  28          {0x21,0x7F,0x01,0x00,0x7F,0x49,0x49,0x4F},     //16
+  29          };   
+  30           
+  31          u8 ledwei[]={0x7f,0xbf,0xdf,0xef,0xf7,0xfb,0xfd,0xfe}; 
+  32           
+  33           
+  34          void delay(u16 i)
+  35          {
+  36   1        while(i--);
+  37   1      }
+  38           
+  39          void Hc595SendByte(u8 dat)
+  40          {
+  41   1         u8 i;
+  42   1         SRCLK=0;
+  43   1         RC=0;
+  44   1         for(i=0;i<8;i++)
+  45   1         {
+  46   2          SER=dat>>7;
+  47   2          dat<<=1;
+  48   2           
+  49   2          SRCLK=1;
+  50   2          _nop_();
+  51   2          _nop_();
+  52   2          SRCLK=0;
+  53   2         }
+  54   1         RC=1;
+C51 COMPILER V9.60.0.0   Q                                                                 06/01/2023 17:33:09 PAGE 2   
+
+  55   1         _nop_();
+  56   1         _nop_();
+  57   1         RC=0; 
+  58   1      }
+  59           
+  60          int main()
+  61          {
+  62   1        u16 i,j,k;
+  63   1        while(1)
+  64   1        {                                                
+  65   2          for(j=0;j<80;j++)                           //?????????????
+  66   2          {
+  67   3            for(i=0;i<8;i++)
+  68   3            {
+  69   4              P0=ledwei[i];
+  70   4              Hc595SendByte(ledduan[k][i]);
+  71   4              delay(50);        
+  72   4              Hc595SendByte(0x00);
+  73   4            }
+  74   3          }
+  75   2          k++;                                       //ldeduan???++
+  76   2          if(k>16)                                    //?k>=10,
+  77   2          {
+  78   3            k=0;                                   //k=0
+  79   3          }
+  80   2        }
+  81   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    175    ----
+   CONSTANT SIZE    =    136    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      8       4
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
